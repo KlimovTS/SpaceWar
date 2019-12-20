@@ -140,7 +140,12 @@ class Gun():
             self.Reloading=0
             self.owner.energy -= self.energyConsumption
     def draw(self):
-        canv.create_oval(self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize+10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize+10*self.owner.extraSize, self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize-10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize-10*self.owner.extraSize, fill = colorRGB(self.owner.color[0]/4, self.owner.color[1]/4, self.owner.color[2]/4), width=2*self.owner.extraSize, outline = colorRGB(255, 255, 255))
+        #canv.create_oval(self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize+10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize+10*self.owner.extraSize, self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize-10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize-10*self.owner.extraSize, fill = colorRGB(self.owner.color[0]/4, self.owner.color[1]/4, self.owner.color[2]/4), width=2*self.owner.extraSize, outline = colorRGB(255, 255, 255))
+        x1 = self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize
+        y1 = self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize
+        x2 = self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize + 30*self.owner.extraSize*math.cos(self.owner.angle)
+        y2 = self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize - 30*self.owner.extraSize*math.sin(self.owner.angle)
+        canv.create_line(x1, y1, x2, y2, width=10*self.owner.extraSize, fill = colorRGB(self.owner.color[0]/4, self.owner.color[1]/4, self.owner.color[2]/4))
         self.drawBullets()
     def drawBullets(self):
         for i in self.bullets:
