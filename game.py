@@ -421,6 +421,17 @@ class Starship():
                 self.botMode=0
     def botMachineGun2(self, target):
         global width, heigth
+        BC=0
+        for i in target.guns:
+            for j in i.bullets:
+                jPoses = [[j.circle.x+width, j.circle.y+heigth],  [j.circle.x, j.circle.y+heigth],  [j.circle.x-width, j.circle.y+heigth],
+                        [j.circle.x+width, j.circle.y],  [j.circle.x, j.circle.y],  [j.circle.x-width, j.circle.y],
+                        [j.circle.x+width, j.circle.y-heigth],  [j.circle.x, j.circle.y-heigth],  [j.circle.x-width, j.circle.y-heigth]]
+                jPos = min(jPoses, key = self.minRange)
+                if ((jPos[0]-self.x)**2+(jPos[1]-self.y)**2)<(200)**2:
+                    BC+=1
+        if BC>5:
+            self.botMode = 1
         # выбор ближайшей точки прицеливания
         targetPoints = [[target.x+width, target.y+heigth],  [target.x, target.y+heigth],  [target.x-width, target.y+heigth],
                         [target.x+width, target.y],  [target.x, target.y],  [target.x-width, target.y],
@@ -464,6 +475,49 @@ class Starship():
         if dx2==0 and dy2==0:
             dx2+=(targetVX-self.vx)*t
             dy2+=(targetVY-self.vy)*t
+        if self.botMode==1:
+            if len(target.guns[0].bullets)+len(target.guns[1].bullets)>0 and 1:
+                dx2=0
+                dy2=0
+                dx=0
+                dy=0
+                targX=0
+                targY=0
+                targVX=0
+                targVY=0
+                MassK=0
+                for i in target.guns:
+                    for j in i.bullets:
+                        jPoses = [[j.circle.x+width, j.circle.y+heigth],  [j.circle.x, j.circle.y+heigth],  [j.circle.x-width, j.circle.y+heigth],
+                        [j.circle.x+width, j.circle.y],  [j.circle.x, j.circle.y],  [j.circle.x-width, j.circle.y],
+                        [j.circle.x+width, j.circle.y-heigth],  [j.circle.x, j.circle.y-heigth],  [j.circle.x-width, j.circle.y-heigth]]
+                        jPos = min(jPoses, key = self.minRange)
+                        jSpeeds = [j.vx,j.vy]
+                        m=min([1000000/(math.sqrt((jPos[0]-self.x)**2+(jPos[1]-self.y)**2))**3, 1], key=abs)
+                        targVX+=jSpeeds[0]
+                        targVY+=jSpeeds[1]
+                        targX+=jPos[0]*m
+                        targY+=jPos[1]*m
+                        MassK+=m
+                targX=targX/MassK
+                targY=targY/MassK
+                if ((self.x-target.x)**2+(self.y-target.y)**2)**(1/2) < 10:
+                    dx = -self.vy
+                    dy = self.vx
+                else:
+                    
+                
+                #dx=-targX+self.x
+                #dy=-targY+self.y
+                    if targVX!=0 and targVY!=0:
+                        dx=(targVY*(math.atan(targY/targX)-math.atan(targVY/targVX))/abs(math.atan(targY/targX)-math.atan(targVY/targVX)))+self.x-targX
+                        dy=(-targVX*(math.atan(targY/targX)-math.atan(targVY/targVX))/abs(math.atan(targY/targX)-math.atan(targVY/targVX)))+self.y-targY
+                    if dx==0 and dy==0:
+                        dx=-targetPoint[0]+self.x                              
+                        dy=-targetPoint[1]+self.y
+            else:
+                dx=-targetPoint[0]+self.x
+                dy=-targetPoint[1]+self.y
         if dx+dx2<0:
             targetAngle=math.atan((-dy-dy2)/(dx+dx2))+math.pi
         else:
@@ -546,7 +600,7 @@ if __name__=='__main__':
         global x, y, r, FrameTime, reset, glob_P
         canv.delete(tkinter.ALL)
         if glob_P==0:
-            Starship002.botMachineGun1(Starship001)
+            Starship002.botMachineGun2(Starship001)
             Starship001.botMachineGun1(Starship002)
             if  Starship001.notCrashed:
                 if Starship001.checkHit(Starship002):
