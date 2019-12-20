@@ -133,7 +133,6 @@ class Gun():
             i.time -= FrameTime
             if i.time<0:
                 self.bullets.remove(i)
-        self.drawBullets()
     def shoot(self):
         if self.Reloading==self.ReloadingTime and self.energyConsumption<=self.owner.energy:
             for i in range(0, self.bulletCount):
@@ -142,6 +141,7 @@ class Gun():
             self.owner.energy -= self.energyConsumption
     def draw(self):
         canv.create_oval(self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize+10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize+10*self.owner.extraSize, self.owner.x+rotate([self.position], self.owner.angle, 0, 0)[0][0]*self.owner.extraSize-10*self.owner.extraSize, self.owner.y+rotate([self.position], self.owner.angle, 0, 0)[0][1]*self.owner.extraSize-10*self.owner.extraSize, fill = colorRGB(self.owner.color[0]/4, self.owner.color[1]/4, self.owner.color[2]/4), width=2*self.owner.extraSize, outline = colorRGB(255, 255, 255))
+        self.drawBullets()
     def drawBullets(self):
         for i in self.bullets:
             i.draw()
@@ -219,8 +219,6 @@ class Starship():
         self.move()
         self.draw()
         for i in self.guns:
-            i.draw()
-        for i in self.guns:
             i.tick()
     def draw(self):
         #canv.create_oval(self.x+self.collisionR*self.extraSize, self.y+self.collisionR*self.extraSize, self.x-self.collisionR*self.extraSize, self.y-self.collisionR*self.extraSize, fill = 'grey', width=0)
@@ -233,6 +231,8 @@ class Starship():
             tmp2.append((i[0]*self.extraSize, i[1]*self.extraSize))
         canv.create_polygon(rotate(movePoly(tmp2, self.x, self.y), self.angle, self.x, self.y), fill = colorRGB(self.color[0]/2, self.color[1]/2, self.color[2]/2), width=2*self.extraSize, outline = colorRGB(255, 255, 255))
         canv.create_polygon(rotate(movePoly(tmp, self.x, self.y), self.angle, self.x, self.y), fill = colorRGB(min((-(self.force/self.maxForce)**2+0.5*self.force/self.maxForce+1), 1)*255, min((-14/3*(self.force/self.maxForce)**2+31/6*self.force/self.maxForce+0), 1)*255, min((-2*(self.force/self.maxForce)**2+3*self.force/self.maxForce+0), 1)*255), width=0)
+        for i in self.guns:
+            i.draw()
     def move(self):
         global width, heigth
 #        if keyboard.key9==1:
@@ -518,6 +518,11 @@ class Starship():
                 self.botMode=0
         
 
+glob_P=1
+def pause(a):
+    global glob_P
+    glob_P = 1-glob_P
+
 if __name__=='__main__':
     root = tkinter.Tk()
     width = 1400
@@ -534,23 +539,32 @@ if __name__=='__main__':
 #    Starship002 = Starship(color = [0, 255, 0], controls = ['9', 'i', 'o', 'p', 'l'], txt = "self.gunsPositions = [[-20, -30, 0, 'self.bulletSpeedX=20\\nself.bulletSpeedY=5\\nself.bulletCount = 15\\nself.bulletDamage = 1'], [-20, 30, 0, 'self.bulletSpeedX=20\\nself.bulletSpeedY=5\\nself.bulletCount = 15\\nself.bulletDamage = 1']]")
     Starship002 = Starship(color = [0, 255, 0], controls = ['9', 'i', 'o', 'p', 'l'])
     reset =  0
+    
+    root.bind('<Key-p>', pause)
+    
     def draw():
-        global x, y, r, FrameTime, reset
+        global x, y, r, FrameTime, reset, glob_P
         canv.delete(tkinter.ALL)
-        Starship002.botMachineGun1(Starship001)
-        Starship001.botMachineGun1(Starship002)
-        if  Starship001.notCrashed:
-            if Starship001.checkHit(Starship002):
-                Starship002.crash()
-                Starship001.score += 1
-        if  Starship002.notCrashed:
-            if Starship002.checkHit(Starship001):
-                Starship001.crash()
-                Starship002.score += 1
-        if  Starship001.notCrashed:
-            Starship001.tick()
-        if  Starship002.notCrashed:
-            Starship002.tick()
+        if glob_P==0:
+            Starship002.botMachineGun1(Starship001)
+            Starship001.botMachineGun1(Starship002)
+            if  Starship001.notCrashed:
+                if Starship001.checkHit(Starship002):
+                    Starship002.crash()
+                    Starship001.score += 1
+            if  Starship002.notCrashed:
+                if Starship002.checkHit(Starship001):
+                    Starship001.crash()
+                    Starship002.score += 1
+            if  Starship001.notCrashed:
+                Starship001.tick()
+            if  Starship002.notCrashed:
+                Starship002.tick()
+        else:
+            if  Starship001.notCrashed:
+                Starship001.draw()
+            if  Starship002.notCrashed:
+                Starship002.draw()
         Starship001.printStats(150, 60)
         Starship002.printStats(width-150, 60)
         if not (Starship001.notCrashed and Starship002.notCrashed):
