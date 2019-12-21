@@ -4,8 +4,6 @@ import math
 import random
 
 
-idCounter = 0
-FrameTime = 16
 
 def F1(a):
     return a*a
@@ -211,6 +209,7 @@ class Starship():
         self.guns = []
         for i in self.gunsPositions:
             self.guns.append(Gun(self, i))
+        self.activeKeys = [0, 0, 0, 0, 0]
     def tick(self):
         self.shield+=self.shieldRegeneration
         if self.shield>self.maxShield:
@@ -325,6 +324,14 @@ class Starship():
             i.Reloading = 0
     def crash(self):
         self.notCrashed = 0
+    def privateStats(self):
+        stats = []
+        
+        return stats
+    def publicStats(self):
+        stats = []
+        
+        return stats
     def minRange(self, a):
         return math.sqrt((a[0]-self.x)**2+(a[1]-self.y)**2)
     def botMachineGun1(self, target):
@@ -577,15 +584,21 @@ class Starship():
                 self.botMode=0
         
 
-glob_P=1
-def pause(a):
-    global glob_P
-    glob_P = 1-glob_P
+
+
 
 if __name__=='__main__':
+    idCounter = 0
+    FrameTime = 16
+    
+    glob_P=1
+    def pause(a):
+        global glob_P
+        glob_P = 1-glob_P
+    
     root = tkinter.Tk()
-    width = 1400
-    heigth = 700
+    width = 1600
+    heigth = 850
     WH =  str(width)+'x'+str(heigth)
     root.geometry(WH)
     canv = tkinter.Canvas(root, width=width, height=heigth, bg='black')
@@ -605,8 +618,8 @@ if __name__=='__main__':
         global x, y, r, FrameTime, reset, glob_P
         canv.delete(tkinter.ALL)
         if glob_P==0:
-            Starship002.botMachineGun2(Starship001)
-            Starship001.botMachineGun1(Starship002)
+            Starship002.botMachineGun1(Starship001)
+            #Starship001.botMachineGun1(Starship002)
             if  Starship001.notCrashed:
                 if Starship001.checkHit(Starship002):
                     Starship002.crash()

@@ -25,7 +25,6 @@ class Neuron():
                 self.dendrites.append(Dendrit(i))
         self.shift = random.randint(-1000000000, 1000000000)/100000000
         self.axon = 0
-        self.act()
     def act(self):
         if self.dendrites == -1:
             self.axon = self.axon
@@ -100,7 +99,7 @@ class OutLayer(Layer):
         return super().save()
 
 class Brain():
-    def __init__(self, owner, dataBase, InFunc, MidFunc, OutFunc, result):
+    def __init__(self, owner, dataBase, InFunc, MidFunc, OutFunc):
         self.owner = owner
         self.data = []
         self.data.append(self.owner)
@@ -113,7 +112,7 @@ class Brain():
         for i in range(1, MidFunc(-1)):
             self.Mid.append(MidLayer(MidFunc(i), self.Mid[i-1]))
         self.Out = OutLayer(self.Mid[MidFunc(-1)-1], OutFunc)
-        self.res = result
+        self.res = -1
     def act(self):
         self.In.act(self.data)
         for i in self.Mid:
@@ -130,6 +129,19 @@ class Brain():
             txt += i.save()+";"
         txt += self.Out.save()
         return txt
+    def show(self):
+        for i in self.In.neurons:
+            print(i.axon, end=' ')
+        print(';')
+        for i in self.Mid:
+            for j in i.neurons:
+                print(j.axon, end=' ')
+            print(';')
+        for i in self.Out.neurons:
+            print(i.axon, end=' ')
+        print(';')
+        print(self.res, end=' ')
+        print(';')
 
 
 
@@ -153,15 +165,29 @@ if __name__ == '__main__':
         if a == -1:
             return 3
         else:
-            return ['a', 'b', 'c', 'd']
-    r = 0
-    B = Brain(1, [1], inF, midF, outF, r)
+            tmp = []
+            for i in a:
+                if i > 0.5:
+                    tmp.append(1)
+                else:
+                    tmp.append(0)
+            return tmp
+    
+    B = Brain(1, [1], inF, midF, outF)
     f = open("brainTest.txt", "r")
     for i in f:
         B.load(i)
     f.close()
-    f = open("brainTest1.txt", "w")
-    f.write(B.save()+"\n")
-    f.close()
+    
+#    f = open("brainTest1.txt", "w")
+#    f.write(B.save()+"\n")
+#    f.close()
+    
+    B.show()
+    print()
+    n=1
+    for i in range(0, n):
+        B.act()
+    B.show()
         
 
