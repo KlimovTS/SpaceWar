@@ -4,8 +4,8 @@ import game
 
 
 POPULATION_SIZE = 10
-PUBLIC_STATS_LEN = 1
-PRIVATE_STATS_LEN = 1
+PUBLIC_STATS_LEN = 232
+PRIVATE_STATS_LEN = 232
 
 
 
@@ -16,7 +16,7 @@ def intRescale(start, end, number, sections):
     tmp = tmp + end
     return game.rounding(tmp)
 
-# конвертер базы данных во вход нейросети - готово
+# конвертер базы данных во вход нейросети
 def InFunc(a):
         if a == -1:
             global POPULATION_SIZE, PUBLIC_STATS_LEN, PRIVATE_STATS_LEN
@@ -39,7 +39,7 @@ def MidFunc(a):
     else:
         return tmp[a]
 
-# конвертер из нейросети на управление - готово
+# конвертер из нейросети на управление
 def OutFunc(a):
     if a == -1:
         return 5
@@ -78,5 +78,3 @@ class SmartStarship():
             self.starship.pressSpace()
         else:
             self.starship.releaseSpace()
-    
-

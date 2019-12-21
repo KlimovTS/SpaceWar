@@ -210,6 +210,50 @@ class Starship():
         for i in self.gunsPositions:
             self.guns.append(Gun(self, i))
         self.activeKeys = [0, 0, 0, 0, 0]
+        tmp = [0, 0, 0]
+        self.history0 = [tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp]
+        self.history1 = [tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp]
+        self.history2 = [tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp, tmp]
+#        self.history3 = []
+#        self.history4 = []
+    def checkHistory(self):
+        self.history0.append([self.activeKeys[0]-self.activeKeys[2], self.activeKeys[1]-self.activeKeys[3], self.activeKeys[4]])
+        if len(self.history0)==16:
+            tmp0 = tmp1 = tmp2 = 0
+            for i in range(0, 4):
+                tmp0 += self.history0[0][0]
+                tmp1 += self.history0[0][1]
+                tmp2 += self.history0[0][2]
+                self.history0.remove(self.history0[0])
+            self.history1.append([tmp0/4, tmp1/4, tmp2/4])
+        if len(self.history1)==16:
+            tmp0 = tmp1 = tmp2 = 0
+            for i in range(0, 4):
+                tmp0 += self.history1[0][0]
+                tmp1 += self.history1[0][1]
+                tmp2 += self.history1[0][2]
+                self.history1.remove(self.history1[0])
+            self.history2.append([tmp0/4, tmp1/4, tmp2/4])
+#        if len(self.history2)==16:
+#            tmp0 = tmp1 = tmp2 = 0
+#            for i in range(0, 4):
+#                tmp0 += self.history2[0][0]
+#                tmp1 += self.history2[0][1]
+#                tmp2 += self.history2[0][2]
+#                self.history2.remove(self.history2[0])
+#            self.history3.append([tmp0/4, tmp1/4, tmp2/4])
+#        if len(self.history3)==16:
+#            tmp0 = tmp1 = tmp2 = 0
+#            for i in range(0, 4):
+#                tmp0 += self.history3[0][0]
+#                tmp1 += self.history3[0][1]
+#                tmp2 += self.history3[0][2]
+#                self.history3.remove(self.history3[0])
+#            self.history4.append([tmp0/4, tmp1/4, tmp2/4])
+#        if len(self.history4)==13:
+#                self.history4.remove(self.history4[0])
+        if len(self.history2)==13:
+                self.history2.remove(self.history2[0])
     def tick(self):
         self.shield+=self.shieldRegeneration
         if self.shield>self.maxShield:
@@ -220,6 +264,7 @@ class Starship():
         self.energy+=self.energyRegeneration
         if self.energy>self.maxEnergy:
             self.energy=self.maxEnergy
+        self.checkHistory()
         self.move()
         self.draw()
         for i in self.guns:
@@ -300,7 +345,8 @@ class Starship():
                 a = a or i.checkHit(obj)
         return a and obj.notCrashed
     def printStats(self, x, y):
-        canv.create_text(x, y, text = 'Score = ' + str(self.score), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
+        #canv.create_text(x, y, text = 'Score = ' + str(self.score), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
+        canv.create_text(x, y, text = 'Score = ' + str(len(self.privateStats())), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
         #canv.create_text(x, y+40, text = 'V = ' + mstr(math.sqrt((self.vx)**2+(self.vy)**2)), font = 'Verdana 20',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
         canv.create_text(x, y+70, text = '|'*rounding(20*self.shield/self.maxShield), font = 'Verdana 20',  fill  = colorRGB(0, 0, 255))
         canv.create_text(x, y+100, text = '|'*rounding(20*self.hp/self.maxHp), font = 'Verdana 20',  fill  = colorRGB(255, 0, 0))
@@ -326,11 +372,93 @@ class Starship():
         self.notCrashed = 0
     def privateStats(self):
         stats = []
-        
+        stats.append(self.guns[0].Reloading)
+        stats.append(self.guns[1].Reloading)
+        stats.append(self.x)
+        stats.append(self.y)
+        stats.append(self.vx)
+        stats.append(self.vy)
+        stats.append(self.ax)
+        stats.append(self.ay)
+        stats.append(self.angle)
+        stats.append(self.shield)
+        stats.append(self.hp)
+        stats.append(self.energy)
+        tmp = 28
+        for i in self.guns[0].bullets:
+            stats.append(i.circle.x)
+            stats.append(i.circle.y)
+            stats.append(i.vx)
+            stats.append(i.vy)
+            tmp-=1
+        for i in self.guns[1].bullets:
+            stats.append(i.circle.x)
+            stats.append(i.circle.y)
+            stats.append(i.vx)
+            stats.append(i.vy)
+            tmp-=1
+        for i in range(0, tmp):
+            stats.append(0)
+            stats.append(0)
+            stats.append(0)
+            stats.append(0)
+        for i in range(len(self.history0)-1, len(self.history0)-13, -1):
+            stats.append(self.history0[i][0])
+            stats.append(self.history0[i][1])
+            stats.append(self.history0[i][2])
+        for i in range(len(self.history1)-1, len(self.history1)-13, -1):
+            stats.append(self.history1[i][0])
+            stats.append(self.history1[i][1])
+            stats.append(self.history1[i][2])
+        for i in range(len(self.history2)-1, len(self.history2)-13, -1):
+            stats.append(self.history2[i][0])
+            stats.append(self.history2[i][1])
+            stats.append(self.history2[i][2])
         return stats
     def publicStats(self):
         stats = []
-        
+        stats.append(self.guns[0].Reloading)
+        stats.append(self.guns[1].Reloading)
+        stats.append(self.x)
+        stats.append(self.y)
+        stats.append(self.vx)
+        stats.append(self.vy)
+        stats.append(self.ax)
+        stats.append(self.ay)
+        stats.append(self.angle)
+        stats.append(self.shield)
+        stats.append(self.hp)
+        stats.append(self.energy)
+        tmp = 28
+        for i in self.guns[0].bullets:
+            stats.append(i.circle.x)
+            stats.append(i.circle.y)
+            stats.append(i.vx)
+            stats.append(i.vy)
+            tmp-=1
+        for i in self.guns[1].bullets:
+            stats.append(i.circle.x)
+            stats.append(i.circle.y)
+            stats.append(i.vx)
+            stats.append(i.vy)
+            tmp-=1
+        for i in range(0, tmp):
+            stats.append(0)
+            stats.append(0)
+            stats.append(0)
+            stats.append(0)
+        for i in range(len(self.history0)-1, len(self.history0)-13, -1):
+            stats.append(self.history0[i][0])
+            stats.append(self.history0[i][1])
+            stats.append(self.history0[i][2])
+        for i in range(len(self.history1)-1, len(self.history1)-13, -1):
+            stats.append(self.history1[i][0])
+            stats.append(self.history1[i][1])
+            stats.append(self.history1[i][2])
+        for i in range(len(self.history2)-1, len(self.history2)-13, -1):
+            stats.append(self.history2[i][0])
+            stats.append(self.history2[i][1])
+            stats.append(self.history2[i][2])
         return stats
     def minRange(self, a):
         return math.sqrt((a[0]-self.x)**2+(a[1]-self.y)**2)
