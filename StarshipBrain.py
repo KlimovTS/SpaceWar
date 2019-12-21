@@ -11,7 +11,6 @@ class Dendrit():
     def act(self):
         return self.weight*self.attachedAxon
     def load(self, data):
-        print(data)
         self.weight = float(data)
     def save(self):
         return str(self.weight)
@@ -37,7 +36,6 @@ class Neuron():
             self.axon = sig(tmp)
     def load(self, data):
         tmp = data.split(' ')
-        print(tmp[0])
         for i in range(0, len(tmp)-1):
             self.dendrites[i].load(tmp[i])
         self.shift = float(tmp[len(tmp)-1])
@@ -58,7 +56,6 @@ class Layer():
             i.act()
     def load(self, data):
         tmp = data.split(',')
-        print(tmp[0])
         for i in range(0, len(tmp)-1):
             if tmp[i] != '':
                 self.neurons[i].load(tmp[i])
@@ -124,7 +121,6 @@ class Brain():
         self.res = self.Out.act()
     def load(self, data):
         tmp = data.split(sep=';')
-        print(tmp[0])
         for i in range(0, len(tmp)-1):
             self.Mid[i].load(tmp[i])
         self.Out.load(tmp[len(tmp)-1])
@@ -162,7 +158,6 @@ if __name__ == '__main__':
     B = Brain(1, [1], inF, midF, outF, r)
     f = open("brainTest.txt", "r")
     for i in f:
-        print(i)
         B.load(i)
     f.close()
     f = open("brainTest1.txt", "w")
