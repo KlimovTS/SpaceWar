@@ -50,12 +50,37 @@ class Circle():
     def draw(self):
         canv.create_oval(self.x+self.r, self.y+self.r, self.x-self.r, self.y-self.r, fill = self.c, width=0)
 
+def normAngle(a):
+    tmp = 0
+    if a>=2*math.pi:
+        a-=2*math.pi
+        tmp += 1
+    if a<0:
+        a+=2*math.pi
+        tmp += 1
+    if tmp == 0:
+        return a
+    else:
+        return normAngle(a)
+def normAngle2(a):
+    tmp = 0
+    if a>=math.pi:
+        a-=2*math.pi
+        tmp += 1
+    if a<-math.pi:
+        a+=2*math.pi
+        tmp += 1
+    if tmp == 0:
+        return a
+    else:
+        return normAngle2(a)
+
 def getAngle(dx, dy):
     if dx<0:
         targetAngle=math.atan((-dy)/(max(dx, 0.000000001, key=abs)))+math.pi
     else:
         targetAngle=math.atan((-dy)/(max(dx, 0.000000001, key=abs)))
-    return targetAngle
+    return normAngle(targetAngle)
 
 class Bullet():
     def __init__(self, owner):
@@ -123,14 +148,17 @@ class Gun():
         if self.Reloading > self.ReloadingTime:
             self.Reloading = self.ReloadingTime
         txt = 'if keyboard.key'+self.owner.controls[4]+'''==1:
-            self.shoot()'''
+            self.owner.activeKeys[4]=1'''
         exec(txt)
+        if self.owner.activeKeys[4]==1:
+            self.shoot()
         self.targeting()
         for i in self.bullets:
             i.move()
             i.time -= FrameTime
             if i.time<0:
                 self.bullets.remove(i)
+        self.owner.activeKeys[4]=0
     def shoot(self):
         if self.Reloading==self.ReloadingTime and self.energyConsumption<=self.owner.energy:
             for i in range(0, self.bulletCount):
@@ -288,32 +316,42 @@ class Starship():
 #            self.extraSize*=0.99
 #        if keyboard.key0==1:
 #            self.extraSize/=0.99
+#        
         txt = 'if keyboard.key'+self.controls[0]+'''==1:
-            self.force+=self.engineForceAcseleration
-            if self.force > self.maxForce:
-                self.force = self.maxForce'''
+            self.activeKeys[0]=1'''
         exec(txt)
         txt = 'if keyboard.key'+self.controls[2]+'''==1:
-            self.force-=3*self.engineForceAcseleration
-            if self.force < 0:
-                self.force = 0'''
+            self.activeKeys[2]=1'''
         exec(txt)
         txt = 'if keyboard.key'+self.controls[1]+'''==1:
-            da = (0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2)))
-            self.angle += da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(da*(0.5+self.control/2))*tmpvx + math.sin(da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(da*(0.5+self.control/2))*tmpvx + math.cos(da*(0.5+self.control/2))*tmpvy'''
+            self.activeKeys[1]=1'''
         exec(txt)
         txt = 'if keyboard.key'+self.controls[3]+'''==1:
-            da = (0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2)))
-            self.angle -= da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(-da*(0.5+self.control/2))*tmpvx + math.sin(-da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(-da*(0.5+self.control/2))*tmpvx + math.cos(-da*(0.5+self.control/2))*tmpvy'''
+            self.activeKeys[3]=1'''
         exec(txt)
+#        
+        if self.activeKeys[0]==1:
+            self.force+=self.engineForceAcseleration
+            if self.force > self.maxForce:
+                self.force = self.maxForce
+        if self.activeKeys[2]==1:
+            self.force-=3*self.engineForceAcseleration
+            if self.force < 0:
+                self.force = 0
+        if self.activeKeys[1]==1:
+            da = (0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))/self.extraSize)
+            self.angle += da
+        if self.activeKeys[3]==1:
+            da = (0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))/self.extraSize)
+            self.angle -= da
+        dVA = self.angle-getAngle(self.vx, self.vy)
+        dVA = normAngle2(dVA)
+        dVA *= self.control/10
+        tmpvx = self.vx
+        tmpvy = self.vy
+        self.vx = math.cos(dVA)*tmpvx + math.sin(dVA)*tmpvy
+        self.vy = -math.sin(dVA)*tmpvx + math.cos(dVA)*tmpvy
+        
         #canv.create_text(width/2-1, 60, text = mstr(math.sqrt((self.vx)**2+(self.vy)**2)), font = 'Verdana 30')
         self.ax = self.force/self.mass*math.cos(self.angle)*self.extraSize
         self.ay = -self.force/self.mass*math.sin(self.angle)*self.extraSize
@@ -328,16 +366,23 @@ class Starship():
         self.vy=self.vy*t2
         self.x+=self.vx
         self.y+=self.vy
-        if self.angle>2*math.pi:
+        if self.angle>=2*math.pi:
             self.angle-=2*math.pi
+        if self.angle<0:
+            self.angle+=2*math.pi
         if self.x>width-1:
-            self.x=0
+            self.x-=width
         if self.x<0:
-            self.x=width-1
+            self.x+=width
         if self.y>heigth-1:
-            self.y=0
+            self.y-=heigth
         if self.y<0:
-            self.y=heigth-1
+            self.y+=heigth
+        
+        self.activeKeys[0]=0
+        self.activeKeys[1]=0
+        self.activeKeys[2]=0
+        self.activeKeys[3]=0
     def checkHit(self, obj):
         a=0
         if obj.notCrashed:
@@ -345,8 +390,8 @@ class Starship():
                 a = a or i.checkHit(obj)
         return a and obj.notCrashed
     def printStats(self, x, y):
-        #canv.create_text(x, y, text = 'Score = ' + str(self.score), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
-        canv.create_text(x, y, text = 'Score = ' + str(len(self.privateStats())), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
+        canv.create_text(x, y, text = 'Score = ' + str(self.score), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
+        #canv.create_text(x, y, text = 'Score = ' + str(len(self.privateStats())), font = 'Verdana 30',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
         #canv.create_text(x, y+40, text = 'V = ' + mstr(math.sqrt((self.vx)**2+(self.vy)**2)), font = 'Verdana 20',  fill  = colorRGB(self.color[0], self.color[1], self.color[2]))
         canv.create_text(x, y+70, text = '|'*rounding(20*self.shield/self.maxShield), font = 'Verdana 20',  fill  = colorRGB(0, 0, 255))
         canv.create_text(x, y+100, text = '|'*rounding(20*self.hp/self.maxHp), font = 'Verdana 20',  fill  = colorRGB(255, 0, 0))
@@ -380,7 +425,8 @@ class Starship():
         stats.append(self.vy)
         stats.append(self.ax)
         stats.append(self.ay)
-        stats.append(self.angle)
+        stats.append(math.cos(self.angle))
+        stats.append(-math.sin(self.angle))
         stats.append(self.shield)
         stats.append(self.hp)
         stats.append(self.energy)
@@ -425,7 +471,8 @@ class Starship():
         stats.append(self.vy)
         stats.append(self.ax)
         stats.append(self.ay)
-        stats.append(self.angle)
+        stats.append(math.cos(self.angle))
+        stats.append(-math.sin(self.angle))
         stats.append(self.shield)
         stats.append(self.hp)
         stats.append(self.energy)
@@ -487,7 +534,8 @@ class Starship():
         targetVY = target.vy*1.0
         t0=t
         if self.botMode==0:
-            while t0>0:
+            i = 0
+            while (t0>0) and (i < 125):
                 tmpt=min(1, t0)
                 ax = targetForce/targetMass*math.cos(targetA)*target.extraSize
                 ay = -targetForce/targetMass*math.sin(targetA)*target.extraSize
@@ -504,47 +552,30 @@ class Starship():
                 t0+=t-prevT
                 prevT=t
                 t0-=1
+                i += 1
         if dx2==0 and dy2==0:
             dx2+=(targetVX-self.vx)*t
             dy2+=(targetVY-self.vy)*t
-        if dx+dx2<0:
-            targetAngle=math.atan((-dy-dy2)/(dx+dx2))+math.pi
-        else:
-            targetAngle=math.atan((-dy-dy2)/(dx+dx2))
+        targetAngle = getAngle(dx+dx2, dy+dy2)
         dAngle = targetAngle-self.angle
-        if dAngle>2*math.pi:
-            dAngle-=2*math.pi
-        if abs(dAngle)>math.pi:
-            if dAngle>0:
-                dAngle=-2*math.pi+dAngle
-            else:
-                dAngle=2*math.pi-dAngle
+        dAngle = normAngle2(dAngle)
         # поворот
         if dAngle>0:
-            da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), abs(dAngle))
-            #da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), 555)
-            if self.botMode==1:
-                da*=-1
-            self.angle += da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(da*(0.5+self.control/2))*tmpvx + math.sin(da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(da*(0.5+self.control/2))*tmpvx + math.cos(da*(0.5+self.control/2))*tmpvy
+            if self.botMode==0:
+                self.activeKeys[1] = 1
+                self.activeKeys[3] = 0
+            else:
+                self.activeKeys[1] = 0
+                self.activeKeys[3] = 1
         else:
-            da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), abs(dAngle))
-            #da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), 555)
-            da*=-1
-            if self.botMode==1:
-                da*=-1
-            self.angle += da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(da*(0.5+self.control/2))*tmpvx + math.sin(da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(da*(0.5+self.control/2))*tmpvx + math.cos(da*(0.5+self.control/2))*tmpvy
+            if self.botMode==0:
+                self.activeKeys[1] = 0
+                self.activeKeys[3] = 1
+            else:
+                self.activeKeys[1] = 1
+                self.activeKeys[3] = 0
         # движение 
-        self.force+=self.engineForceAcseleration
-        if self.force > self.maxForce:
-            self.force = self.maxForce
+        self.activeKeys[0] = 1
         # переключение стрельбы
         if self.botMode==0:
             for i in self.guns:
@@ -561,17 +592,6 @@ class Starship():
                 self.botMode=0
     def botMachineGun2(self, target):
         global width, heigth
-        BC=0
-        for i in target.guns:
-            for j in i.bullets:
-                jPoses = [[j.circle.x+width, j.circle.y+heigth],  [j.circle.x, j.circle.y+heigth],  [j.circle.x-width, j.circle.y+heigth],
-                        [j.circle.x+width, j.circle.y],  [j.circle.x, j.circle.y],  [j.circle.x-width, j.circle.y],
-                        [j.circle.x+width, j.circle.y-heigth],  [j.circle.x, j.circle.y-heigth],  [j.circle.x-width, j.circle.y-heigth]]
-                jPos = min(jPoses, key = self.minRange)
-                if ((jPos[0]-self.x)**2+(jPos[1]-self.y)**2)<(200)**2:
-                    BC+=1
-        if BC>5:
-            self.botMode = 1
         # выбор ближайшей точки прицеливания
         targetPoints = [[target.x+width, target.y+heigth],  [target.x, target.y+heigth],  [target.x-width, target.y+heigth],
                         [target.x+width, target.y],  [target.x, target.y],  [target.x-width, target.y],
@@ -595,7 +615,8 @@ class Starship():
         targetVY = target.vy*1.0
         t0=t
         if self.botMode==0:
-            while t0>0:
+            i = 0
+            while (t0>0) and (i < 125):
                 tmpt=min(1, t0)
                 ax = targetForce/targetMass*math.cos(targetA)*target.extraSize
                 ay = -targetForce/targetMass*math.sin(targetA)*target.extraSize
@@ -612,90 +633,30 @@ class Starship():
                 t0+=t-prevT
                 prevT=t
                 t0-=1
+                i += 1
         if dx2==0 and dy2==0:
             dx2+=(targetVX-self.vx)*t
             dy2+=(targetVY-self.vy)*t
-        if self.botMode==1:
-            if len(target.guns[0].bullets)+len(target.guns[1].bullets)>0 and 1:
-                dx2=0
-                dy2=0
-                dx=0
-                dy=0
-                targX=0
-                targY=0
-                targVX=0
-                targVY=0
-                MassK=0
-                for i in target.guns:
-                    for j in i.bullets:
-                        jPoses = [[j.circle.x+width, j.circle.y+heigth],  [j.circle.x, j.circle.y+heigth],  [j.circle.x-width, j.circle.y+heigth],
-                        [j.circle.x+width, j.circle.y],  [j.circle.x, j.circle.y],  [j.circle.x-width, j.circle.y],
-                        [j.circle.x+width, j.circle.y-heigth],  [j.circle.x, j.circle.y-heigth],  [j.circle.x-width, j.circle.y-heigth]]
-                        jPos = min(jPoses, key = self.minRange)
-                        jSpeeds = [j.vx,j.vy]
-                        m=min([1000000/(math.sqrt((jPos[0]-self.x)**2+(jPos[1]-self.y)**2))**3, 1], key=abs)
-                        targVX+=jSpeeds[0]
-                        targVY+=jSpeeds[1]
-                        targX+=jPos[0]*m
-                        targY+=jPos[1]*m
-                        MassK+=m
-                targX=targX/MassK
-                targY=targY/MassK
-                if ((self.x-target.x)**2+(self.y-target.y)**2)**(1/2) < 10:
-                    dx = -self.vy
-                    dy = self.vx
-                else:
-                    
-                
-                #dx=-targX+self.x
-                #dy=-targY+self.y
-                    if targVX!=0 and targVY!=0:
-                        dx=(targVY*(math.atan(targY/targX)-math.atan(targVY/targVX))/abs(math.atan(targY/targX)-math.atan(targVY/targVX)))+self.x-targX
-                        dy=(-targVX*(math.atan(targY/targX)-math.atan(targVY/targVX))/abs(math.atan(targY/targX)-math.atan(targVY/targVX)))+self.y-targY
-                    if dx==0 and dy==0:
-                        dx=-targetPoint[0]+self.x                              
-                        dy=-targetPoint[1]+self.y
-            else:
-                dx=-targetPoint[0]+self.x
-                dy=-targetPoint[1]+self.y
-        if dx+dx2<0:
-            targetAngle=math.atan((-dy-dy2)/(dx+dx2))+math.pi
-        else:
-            targetAngle=math.atan((-dy-dy2)/(dx+dx2))
+        targetAngle = getAngle(dx+dx2, dy+dy2)
         dAngle = targetAngle-self.angle
-        if dAngle>2*math.pi:
-            dAngle-=2*math.pi
-        if abs(dAngle)>math.pi:
-            if dAngle>0:
-                dAngle=-2*math.pi+dAngle
-            else:
-                dAngle=2*math.pi-dAngle
+        dAngle = normAngle2(dAngle)
         # поворот
         if dAngle>0:
-            da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), abs(dAngle))
-            #da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), 555)
-            if self.botMode==1:
-                da*=-1
-            self.angle += da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(da*(0.5+self.control/2))*tmpvx + math.sin(da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(da*(0.5+self.control/2))*tmpvx + math.cos(da*(0.5+self.control/2))*tmpvy
+            if self.botMode==0:
+                self.activeKeys[1] = 1
+                self.activeKeys[3] = 0
+            else:
+                self.activeKeys[1] = 0
+                self.activeKeys[3] = 1
         else:
-            da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), abs(dAngle))
-            #da = min((0.5+self.control/2)/5/math.sqrt(1+math.sqrt(((self.vx)**2+(self.vy)**2))), 555)
-            da*=-1
-            if self.botMode==1:
-                da*=-1
-            self.angle += da
-            tmpvx = self.vx
-            tmpvy = self.vy
-            self.vx = math.cos(da*(0.5+self.control/2))*tmpvx + math.sin(da*(0.5+self.control/2))*tmpvy
-            self.vy = -math.sin(da*(0.5+self.control/2))*tmpvx + math.cos(da*(0.5+self.control/2))*tmpvy
+            if self.botMode==0:
+                self.activeKeys[1] = 0
+                self.activeKeys[3] = 1
+            else:
+                self.activeKeys[1] = 1
+                self.activeKeys[3] = 0
         # движение 
-        self.force+=self.engineForceAcseleration
-        if self.force > self.maxForce:
-            self.force = self.maxForce
+        self.activeKeys[0] = 1
         # переключение стрельбы
         if self.botMode==0:
             for i in self.guns:
@@ -746,8 +707,8 @@ if __name__=='__main__':
         global x, y, r, FrameTime, reset, glob_P
         canv.delete(tkinter.ALL)
         if glob_P==0:
-            Starship002.botMachineGun1(Starship001)
-            #Starship001.botMachineGun1(Starship002)
+            Starship002.botMachineGun2(Starship001)
+            Starship001.botMachineGun1(Starship002)
             if  Starship001.notCrashed:
                 if Starship001.checkHit(Starship002):
                     Starship002.crash()
